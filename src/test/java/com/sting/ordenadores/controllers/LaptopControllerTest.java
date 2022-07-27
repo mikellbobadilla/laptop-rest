@@ -31,6 +31,33 @@ class LaptopControllerTest {
 
   private final String url = "/api/laptops";
 
+  /** Allows to send JSON
+   *
+   */
+  private static HttpEntity<String> request(String json){
+    // Headers
+    HttpHeaders header = new HttpHeaders();
+    header.setContentType(MediaType.APPLICATION_JSON);
+    header.setAccept(List.of(MediaType.APPLICATION_JSON));
+
+    return new HttpEntity<>(json, header);
+  }
+
+  /** Send Request
+   *
+   */
+    private void sendRequest(){
+      String json = """
+            {
+              "model": "Lap Test",
+              "price": 40.00,
+              "specs": "4 GB RAM"
+            }
+            """;
+      ResponseEntity<Laptop> res = testRestTemplate.exchange(url, HttpMethod.POST, request(json), Laptop.class);
+    }
+
+
   /** Setting environment to test
    *
    */
@@ -41,28 +68,42 @@ class LaptopControllerTest {
   }
 
 
+  /** Testing OK
+   *
+   */
   @Test
   void findAll() {
+
     ResponseEntity<Laptop[]> res = testRestTemplate.getForEntity(url, Laptop[].class);
+
 
     List<Laptop> lap = Arrays.asList(Objects.requireNonNull(res.getBody()));
     assertEquals(HttpStatus.OK, res.getStatusCode());
   }
 
+
+  /** Testing NOT_FOUND GET
+   *
+   */
   @Test
-  void findOneById() {
+  void findOneById_NOT_FOUND() {
     ResponseEntity<Laptop> res = testRestTemplate.getForEntity(url + "/1", Laptop.class);
     assertEquals(HttpStatus.NOT_FOUND, res.getStatusCode());
     assertNull(res.getBody());
   }
 
   @Test
-  void create() {
-    // Headers
-    HttpHeaders header = new HttpHeaders();
-    header.setContentType(MediaType.APPLICATION_JSON);
-    header.setAccept(List.of(MediaType.APPLICATION_JSON));
+  void findOneById_OK() {
+    sendRequest();
+    ResponseEntity<Laptop> res = testRestTemplate.getForEntity(url + "/1", Laptop.class);
+    assertEquals(HttpStatus.OK, res.getStatusCode());
+  }
 
+  /** Testing OK POST
+   *
+   */
+  @Test
+  void create_OK() {
     String json = """
             {
               "model": "Lap Test",
@@ -70,27 +111,59 @@ class LaptopControllerTest {
               "specs": "4 GB RAM"
             }
             """;
-    HttpEntity<String> request = new HttpEntity<>(json, header);
-    ResponseEntity<Laptop> res = testRestTemplate.exchange(url, HttpMethod.POST, request, Laptop.class);
-
+    ResponseEntity<Laptop> res = testRestTemplate.exchange(url, HttpMethod.POST, request(json), Laptop.class);
     Laptop result = res.getBody();
-    assert result != null;
-    assertEquals(1L, result.getId());
-    assertEquals("Lap Test", result.getModel());
+    assertEquals(HttpStatus.OK, res.getStatusCode());
   }
 
+  /** Testing NO_CONTENT PUT
+   *
+   */
   @Test
-  void update() {
-
-
-
+  void update_NO_CONTENT() {
+    sendRequest();
+    // Update The Entity
+    String json = """
+            {
+              "id": 1,
+              "model": "Lap Test Put",
+              "price": 70.00,
+              "specs": "4 GB RAM, 1T storage"
+            }
+            """;
+    ResponseEntity<Laptop> res = testRestTemplate.exchange(url, HttpMethod.PUT, request(json), Laptop.class);
+    assertEquals(HttpStatus.OK, res.getStatusCode());
   }
 
+
+  /** Testing NO_CONTENT DELETE
+   *
+   */
   @Test
-  void delete() {
+  void delete_NO_CONTENT() {
+    sendRequest();
+    HttpEntity<String> entity = new HttpEntity<>("");
+    ResponseEntity<Laptop> res = testRestTemplate.exchange(url+ "/1", HttpMethod.DELETE, entity, Laptop.class);
+    assertEquals(HttpStatus.NO_CONTENT, res.getStatusCode());
   }
 
+  /** Testing NOT_FOUND DELETE
+   *
+   */
+  @Test
+  void delete_NOT_FOUND(){
+    HttpEntity<String> entity = new HttpEntity<>("");
+    ResponseEntity<Laptop> res = testRestTemplate.exchange(url+ "/1", HttpMethod.DELETE, entity, Laptop.class);
+    assertEquals(HttpStatus.NOT_FOUND, res.getStatusCode());
+  }
+
+  /** Testing NO_CONTENT DELETE
+   *
+   */
   @Test
   void deleteAll() {
+    HttpEntity<String> entity = new HttpEntity<>("");
+    ResponseEntity<Laptop> res = testRestTemplate.exchange(url, HttpMethod.DELETE, entity, Laptop.class);
+    assertEquals(HttpStatus.NO_CONTENT, res.getStatusCode());
   }
 }
