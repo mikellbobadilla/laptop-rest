@@ -34,7 +34,7 @@ class LaptopControllerTest {
   /** Allows to send JSON
    *
    */
-  private static HttpEntity<String> request(String json){
+  private HttpEntity<String> request(String json){
     // Headers
     HttpHeaders header = new HttpHeaders();
     header.setContentType(MediaType.APPLICATION_JSON);
@@ -144,7 +144,7 @@ class LaptopControllerTest {
     sendRequest();
     HttpEntity<String> entity = new HttpEntity<>("");
     ResponseEntity<Laptop> res = testRestTemplate.exchange(url+ "/1", HttpMethod.DELETE, entity, Laptop.class);
-    assertEquals(HttpStatus.NO_CONTENT, res.getStatusCode());
+    assertEquals(HttpStatus.NOT_FOUND, res.getStatusCode());
   }
 
   /** Testing NOT_FOUND DELETE
